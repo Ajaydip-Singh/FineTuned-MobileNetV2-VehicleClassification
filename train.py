@@ -1,7 +1,10 @@
+import os
+import random
+
 from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adam
 from ModelDetector import *
-import random
+
 
 TRAIN_DATA_DIRECTORY = './vehicles'
 RANDOM_SEED = random.randint(1, 1000)
@@ -44,3 +47,8 @@ detector.model.fit_generator(generator=train_augumented_generator,
                              validation_data=validation_augumented_generator,
                              validation_steps=step_size_val,
                              epochs=100)
+
+if not os.path.exists('./trained'):
+    os.mkdir('./trained')
+
+detector.model.save_weights('./trained/model_detector.h5')
