@@ -46,7 +46,7 @@ detector.model.fit_generator(generator=train_augumented_generator,
                              steps_per_epoch=step_size_train,
                              validation_data=validation_augumented_generator,
                              validation_steps=step_size_val,
-                             epochs=100)
+                             epochs=35)
 
 if not os.path.exists('./trained'):
     os.mkdir('./trained')
