@@ -1,54 +1,39 @@
 import os
-import random
-
-from keras.preprocessing.image import ImageDataGenerator
-from keras.optimizers import Adam
+import glob
+import numpy as np
+from PIL import Image
 from ModelDetector import *
-
-
-TRAIN_DATA_DIRECTORY = './data/train/vehicles'
-RANDOM_SEED = random.randint(1, 1000)
+import random
+TEST_DATA_DIRECTORY = './data/train/**/*'
 
 # create a model
 detector = ModelDetector()
+detector.model.load_weights("./trained/model_detector.h5")
+
+paths = glob.glob('./data/train/**')
+paths = sorted(paths)
 
 # setup data
-train_data_generator = ImageDataGenerator(
-    rescale=1. / 255,
-    shear_range=0.2,
-    zoom_range=0.2,
-    horizontal_flip=True,
-    validation_split=0.2)
+classes = list(map(lambda x: x.split("/")[-1], paths))
 
-train_augumented_generator = train_data_generator.flow_from_directory(TRAIN_DATA_DIRECTORY,
-                                                                      target_size=(224, 224),
-                                                                      batch_size=64,
-                                                                      shuffle=True,
-                                                                      seed=RANDOM_SEED,
-                                                                      class_mode='categorical',
-                                                    subset='training')
+data = glob.glob(TEST_DATA_DIRECTORY)
+random.shuffle(data)
 
-validation_augumented_generator = train_data_generator.flow_from_directory(TRAIN_DATA_DIRECTORY,
-                                                                           target_size=(224, 224),
-                                                                           batch_size=64,
-                                                                           class_mode='categorical',
-                                                                           shuffle=True,
-                                                                           seed=RANDOM_SEED,
-                                                                           subset='validation')
+correct = 0
+index = 0
+for image_path in glob.glob(TEST_DATA_DIRECTORY):
+    answer = image_path.split("_")[-1].split(".")[0]
+    img = Image.open(image_path).resize((224, 224))
+    img = np.array(img, dtype=np.float64)
+    img /= 255.0
+    img = np.expand_dims(img, axis=0)
+    probabilities = detector.model.predict(img)
+    prediction_classes = probabilities[0].argsort()[-5:][::-1]
 
-opt = Adam(lr=0.0001)
-detector.model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+    prediction = prediction_classes[0]
+    if answer in classes[prediction]:
+        correct += 1
+    index += 1
+    if index % 500 == 0 and index > 0:
+        print("accuray is ", correct / index)
 
-step_size_train = train_augumented_generator.n / train_augumented_generator.batch_size
-step_size_val = validation_augumented_generator.samples // validation_augumented_generator.batch_size
-
-detector.model.fit_generator(generator=train_augumented_generator,
-                             steps_per_epoch=step_size_train,
-                             validation_data=validation_augumented_generator,
-                             validation_steps=step_size_val,
-                             epochs=35)
-
-if not os.path.exists('./trained'):
-    os.mkdir('./trained')
-
-detector.model.save_weights('./trained/model_detector.h5')
