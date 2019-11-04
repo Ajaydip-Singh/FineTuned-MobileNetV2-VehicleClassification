@@ -14,14 +14,14 @@ paths = glob.glob('./data/train/**')
 paths = sorted(paths)
 
 # setup data
-classes = list(map(lambda x: x.split("/")[-1], paths))
+classes = list(map(lambda x: x.split("/")[-1].split("\\")[-1], paths))
 
-data = glob.glob(TEST_DATA_DIRECTORY)
-random.shuffle(data)
+test_data = glob.glob(TEST_DATA_DIRECTORY)
+random.shuffle(test_data)
 
 correct = 0
 index = 0
-for image_path in glob.glob(TEST_DATA_DIRECTORY):
+for image_path in test_data:
     answer = image_path.split("_")[-1].split(".")[0]
     img = Image.open(image_path).resize((224, 224))
     img = np.array(img, dtype=np.float64)
@@ -31,7 +31,7 @@ for image_path in glob.glob(TEST_DATA_DIRECTORY):
     prediction_classes = probabilities[0].argsort()[-5:][::-1]
 
     prediction = prediction_classes[0]
-    if answer in classes[prediction]:
+    if answer == classes[prediction]:
         correct += 1
     index += 1
     if index % 500 == 0 and index > 0:
