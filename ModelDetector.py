@@ -1,5 +1,5 @@
 from keras.applications import MobileNetV2
-from keras.layers import GlobalAveragePooling2D, Dense, BatchNormalization
+from keras.layers import GlobalAveragePooling2D, Dense, BatchNormalization, Lambda
 from keras.models import Model
 
 
@@ -20,10 +20,13 @@ class ModelDetector:
                   bias_initializer='zeros')(x)
         x = BatchNormalization()(x)
         output = Dense(units=20, activation='softmax')(x)
-
         # Create a extended model
         self.model = Model(inputs=default_model.input, outputs=output)
 
         # Change all layers trainable
         for layer in self.model.layers:
             layer.trainable = True
+
+
+if __name__ == '__main__':
+    ModelDetector()
